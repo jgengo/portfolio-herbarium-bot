@@ -4,7 +4,8 @@
 
 A Telegram bot that automatically processes plant photos, extracts metadata, identifies species, and updates my portfolio's herbarium collection.
 
-> [!NOTE] This bot is designed to work with my personal portfolio repository. Make sure to configure the GitHub integration with the correct repository and appropriate permissions.
+> [!NOTE]
+> This bot is designed to work with my personal portfolio repository. Make sure to configure the GitHub integration with the correct repository and appropriate permissions.
 
 ## Features
 
