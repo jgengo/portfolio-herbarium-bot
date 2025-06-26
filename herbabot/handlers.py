@@ -6,22 +6,13 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
+from herbabot.exif_utils import convert_heic_to_jpeg, extract_exif_metadata
+
 logger = logging.getLogger(__name__)
 
 
-def load_welcome_message() -> str:
-    """Load the welcome message from the markdown template file."""
-    template_path = Path(__file__).parent.parent / "templates" / "bot_welcome.md"
-    try:
-        with open(template_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        logger.error(f"Welcome message template not found at {template_path}")
-        return "Welcome to Herbabot! Please send me a plant photo as a file."
-
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    welcome_message = load_welcome_message()
+    welcome_message = _load_welcome_message()
     await update.message.reply_text(welcome_message, parse_mode="MarkdownV2")
 
 
@@ -49,6 +40,12 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         filename = f"{uuid.uuid4()}.jpg"
         file_path = media_dir / filename
+
+        if file_path.suffix.lower() == ".heic":
+            jpeg_path = convert_heic_to_jpeg(file_path)
+            if jpeg_path:
+                file_path = jpeg_path
+
         await file.download_to_drive(file_path)
 
         logger.info(f"File successfully downloaded: {file_path}")
@@ -56,6 +53,11 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(
             "📸 File received! Processing your plant image... 🌿"
         )
+
+        exif_metadata = extract_exif_metadata(file_path)
+        logger.info(f"EXIF metadata: {exif_metadata}")
+
+        await update.message.reply_text(f"EXIF metadata: {exif_metadata}")
 
         # TODO: Implement image processing pipeline
         # - Extract EXIF data (GPS, timestamp)
@@ -77,3 +79,14 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 def register_handlers(app):
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+
+
+def _load_welcome_message() -> str:
+    """Load the welcome message from the markdown template file."""
+    template_path = Path(__file__).parent.parent / "templates" / "bot_welcome.md"
+    try:
+        with open(template_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        logger.error(f"Welcome message template not found at {template_path}")
+        return "Welcome to Herbabot! Please send me a plant photo as a file."

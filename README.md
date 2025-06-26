@@ -7,6 +7,8 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
 > [!NOTE]
 > This bot is designed to work with my personal portfolio repository.
 
+<br><br>
+
 ## Features
 
 * 📸 **Image Processing** - Receives and processes plant photos via Telegram
