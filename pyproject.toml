@@ -1,9 +1,10 @@
 [project]
-name = "herbarium_bot"
+name = "herbabot"
 version = "0.1.0"
 description = "Herbarium Telegram Bot"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "python-dotenv>=1.1.1",
     "python-telegram-bot>=22.1",
 ]
