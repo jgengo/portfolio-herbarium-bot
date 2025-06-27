@@ -14,6 +14,10 @@ RUN apk add --no-cache \
     libheif-dev \
     git
 
+# Configure Git for the container
+RUN git config --global user.email "jordane.gengo@gmail.com" && \
+    git config --global user.name "Herbarium Bot"
+
 # Install uv CLI for dependency management
 RUN pip install --no-cache-dir uv
 
