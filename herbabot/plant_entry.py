@@ -1,0 +1,101 @@
+import logging
+import re
+import shutil
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+from jinja2 import Template
+
+logger = logging.getLogger(__name__)
+
+
+def _sanitize_filename(name: str) -> str:
+    """Convert scientific name to a safe filename."""
+    # Replace spaces and special characters with hyphens
+    sanitized = re.sub(r"[^\w\s-]", "", name.lower())
+    sanitized = re.sub(r"[-\s]+", "-", sanitized)
+    return sanitized.strip("-") + ".jpg"
+
+
+def create_plant_entry(result: Dict[str, Any], image_path: Path) -> Optional[Path]:
+    """
+    Create a plant entry markdown file using the Jinja2 template.
+
+    Args:
+        result: Dictionary containing plant identification results
+        image_path: Path to the original image file
+
+    Returns:
+        Path to the created plant entry markdown file, or None if creation failed
+    """
+    # Load the template
+    template_path = Path(__file__).parent.parent / "templates" / "plant_entry.md.j2"
+    try:
+        with open(template_path, "r", encoding="utf-8") as f:
+            template_content = f.read()
+    except FileNotFoundError:
+        logger.error(f"Plant entry template not found at {template_path}")
+        return None
+
+    # Create tmp directory
+    tmp_dir = Path("tmp")
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename from scientific name
+    scientific_name = result.get("latin_name", "unknown-plant")
+    filename = _sanitize_filename(scientific_name)
+
+    # Create the plant entry file path
+    plant_entry_path = (
+        tmp_dir / f"{_sanitize_filename(scientific_name).replace('.jpg', '')}.md"
+    )
+
+    # Prepare template variables
+    template_vars = {
+        "name": result.get("common_name", scientific_name),
+        "family": "Unknown",  # PlantNet API doesn't provide family info in basic response
+        "scientificName": scientific_name,
+        "fileName": filename,
+        "description": result.get("description", "No description available."),
+    }
+
+    # Render the template
+    template = Template(template_content)
+    rendered_content = template.render(**template_vars)
+
+    # Write the plant entry file
+    try:
+        with open(plant_entry_path, "w", encoding="utf-8") as f:
+            f.write(rendered_content)
+
+        # Copy the image to tmp directory with scientific name
+        image_dest_path = tmp_dir / filename
+        shutil.copy2(image_path, image_dest_path)
+
+        logger.info(f"Plant entry created: {plant_entry_path}")
+        logger.info(f"Image copied to: {image_dest_path}")
+
+        return plant_entry_path
+    except Exception as e:
+        logger.error(f"Error creating plant entry: {e}")
+        return None
+
+
+def get_plant_entry_info(result: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Get formatted information about the plant entry for display.
+
+    Args:
+        result: Dictionary containing plant identification results
+
+    Returns:
+        Dictionary with formatted strings for display
+    """
+    scientific_name = result.get("latin_name", "Unknown")
+    filename = _sanitize_filename(scientific_name)
+
+    return {
+        "scientific_name": scientific_name,
+        "filename": filename,
+        "markdown_filename": f"{_sanitize_filename(scientific_name).replace('.jpg', '')}.md",
+    }
