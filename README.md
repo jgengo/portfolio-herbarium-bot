@@ -9,10 +9,7 @@
   <sub>Created by <a href="https://github.com/jgengo">Jordane Gengo</a></sub>
 </div>
 
-<br />
-
-
-
+<br /><br />
 
 🌿 **Automated Plant Documentation Bot**
 
