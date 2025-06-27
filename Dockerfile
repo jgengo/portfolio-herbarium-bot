@@ -11,7 +11,8 @@ RUN apk add --no-cache \
     libwebp-dev \
     tiff-dev \
     libde265-dev \
-    libheif-dev
+    libheif-dev \
+    git
 
 # Install uv CLI for dependency management
 RUN pip install --no-cache-dir uv
