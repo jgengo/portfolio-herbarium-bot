@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from telegram import Update
@@ -79,8 +80,6 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             if exif_metadata.get("date_taken"):
                 # Format the date nicely
                 try:
-                    from datetime import datetime
-
                     date_obj = datetime.fromisoformat(exif_metadata["date_taken"])
                     formatted_date = date_obj.strftime("%B %d, %Y at %I:%M %p")
                     exif_display += f"📅 *Taken:* {formatted_date}\n"
