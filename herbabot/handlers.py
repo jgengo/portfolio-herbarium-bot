@@ -72,7 +72,33 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         exif_metadata = extract_exif_metadata(file_path)
         logger.info(f"EXIF metadata: {exif_metadata}")
 
-        await update.message.reply_text(f"EXIF metadata: {exif_metadata}")
+        # Create an aesthetic EXIF metadata display
+        if exif_metadata:
+            exif_display = "📸 *Image Details*\n\n"
+
+            if exif_metadata.get("date_taken"):
+                # Format the date nicely
+                try:
+                    from datetime import datetime
+
+                    date_obj = datetime.fromisoformat(exif_metadata["date_taken"])
+                    formatted_date = date_obj.strftime("%B %d, %Y at %I:%M %p")
+                    exif_display += f"📅 *Taken:* {formatted_date}\n"
+                except:
+                    exif_display += f"📅 *Taken:* {exif_metadata['date_taken']}\n"
+
+            if exif_metadata.get("gps_coords"):
+                lat, lon = exif_metadata["gps_coords"]
+                exif_display += f"📍 *Location:* {lat:.6f}, {lon:.6f}\n"
+                # Add a Google Maps link
+                maps_url = f"https://maps.google.com/?q={lat},{lon}"
+                exif_display += f"🗺️ [View on Google Maps]({maps_url})\n"
+
+            await update.message.reply_text(exif_display, parse_mode="Markdown")
+        else:
+            await update.message.reply_text(
+                "📸 *Image Details*\n\nℹ️ No metadata available for this image."
+            )
 
         # Plant identification
         try:
