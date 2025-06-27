@@ -1,5 +1,4 @@
 import logging
-import time
 import uuid
 from pathlib import Path
 
@@ -7,6 +6,7 @@ from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
 from herbabot.exif_utils import convert_heic_to_jpeg, extract_exif_metadata
+from herbabot.plant_id import identify_plant
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +38,32 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         media_dir = Path("media")
         media_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = f"{uuid.uuid4()}.jpg"
+        # Check if the original file is HEIC format
+        original_filename = document.file_name or ""
+        is_heic = original_filename.lower().endswith(".heic")
+
+        # Download with original extension or .jpg as fallback
+        if is_heic:
+            filename = f"{uuid.uuid4()}.heic"
+        else:
+            filename = f"{uuid.uuid4()}.jpg"
+
         file_path = media_dir / filename
-
-        if file_path.suffix.lower() == ".heic":
-            jpeg_path = convert_heic_to_jpeg(file_path)
-            if jpeg_path:
-                file_path = jpeg_path
-
         await file.download_to_drive(file_path)
 
         logger.info(f"File successfully downloaded: {file_path}")
+
+        # Convert HEIC to JPEG if needed
+        if is_heic:
+            jpeg_path = convert_heic_to_jpeg(file_path)
+            if jpeg_path:
+                file_path = jpeg_path
+                logger.info(f"HEIC converted to JPEG: {jpeg_path}")
+            else:
+                await update.message.reply_text(
+                    "❌ Failed to convert HEIC image. Please try sending a JPEG or PNG image."
+                )
+                return
 
         await update.message.reply_text(
             "📸 File received! Processing your plant image... 🌿"
@@ -59,15 +74,38 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         await update.message.reply_text(f"EXIF metadata: {exif_metadata}")
 
-        # TODO: Implement image processing pipeline
-        # - Extract EXIF data (GPS, timestamp)
-        # - Perform plant identification
-        # - Generate documentation
+        # Plant identification
+        try:
+            logger.info(f"Starting plant identification for file: {file_path}")
+            logger.info(
+                f"File size before identification: {file_path.stat().st_size} bytes"
+            )
+            logger.info(f"File exists before identification: {file_path.exists()}")
 
-        # Simulate processing time (remove later)
-        time.sleep(5)
+            result = identify_plant(file_path)
 
-        await message.reply_text("✅ Processing completed successfully! 🌿")
+            logger.info(
+                f"Plant identification successful: {result.get('latin_name', 'Unknown')}"
+            )
+
+            caption = (
+                f"🌿 *{result['latin_name']}*"
+                + (
+                    f" — _{result['common_name']}_\n"
+                    if result.get("common_name")
+                    else "\n"
+                )
+                + f"🔎 Confidence: {result['score']:.2%}\n"
+                + (result.get("description") or "")
+            )
+            await message.reply_text(caption, parse_mode="Markdown")
+        except Exception as e:
+            logger.error("Plant identification error", exc_info=True)
+            logger.error(f"Plant identification failed for file: {file_path}")
+            logger.error(f"Error details: {str(e)}")
+            await message.reply_text(
+                "❌ Could not identify the plant. Please try another photo."
+            )
 
     except Exception as e:
         logger.error(f"Error processing file: {e}")

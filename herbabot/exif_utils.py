@@ -25,10 +25,26 @@ def extract_exif_metadata(image_path: Path) -> dict:
 
 def convert_heic_to_jpeg(heic_path: Path) -> Optional[Path]:
     try:
-        img = Image.open(heic_path)
-        out_path = heic_path.with_suffix(".jpg")
-        img.save(out_path, format="JPEG")
-        return out_path
+        with Image.open(heic_path) as image:
+            # Convert to RGB mode if necessary (HEIC images might be in RGBA or other modes)
+            if image.mode in ("RGBA", "LA", "P"):
+                # Create a white background for transparent images
+                background = Image.new("RGB", image.size, (255, 255, 255))
+                if image.mode == "P":
+                    image = image.convert("RGBA")
+                background.paste(
+                    image, mask=image.split()[-1] if image.mode == "RGBA" else None
+                )
+                image = background
+            elif image.mode != "RGB":
+                image = image.convert("RGB")
+
+            exif_data = image.info.get("exif")
+            out_path = heic_path.with_suffix(".jpg")
+            image.save(
+                out_path, format="JPEG", exif=exif_data, optimize=True, quality=95
+            )
+            return out_path
     except Exception as e:
         print(f"Failed to convert HEIC: {e}")
         return None
