@@ -101,16 +101,36 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
 
 ```
 portfolio-herbarium-bot/
-├── herbabot/            # Core bot code
-│   ├── config.py        # Environment & config loader
-│   ├── exif_utils.py    # EXIF metadata extraction
-│   ├── handlers.py      # Telegram bot handlers
-│   ├── plant_id.py      # Pl@ntNet identification service
-│   └── main.py          # Bot entry point
-├── templates/           # Markdown templates (welcome, entries, etc.)
-├── tests/               # Test suite
-├── pyproject.toml       # Project configuration
-└── README.md            # <-- YOU ARE HERE!
+├── herbabot/                    # Core bot code
+│   ├── __init__.py             # Package initialization
+│   ├── config.py               # Environment & config loader
+│   ├── exif_utils.py           # EXIF metadata extraction
+│   ├── github_pr.py            # GitHub pull request creation
+│   ├── handlers.py             # Telegram bot handlers
+│   ├── main.py                 # Bot entry point
+│   ├── plant_entry.py          # Plant entry data models
+│   └── plant_id.py             # Pl@ntNet identification service
+├── templates/                   # Markdown templates
+│   ├── bot_welcome.md          # Welcome message template
+│   └── plant_entry.md.j2       # Plant entry template (Jinja2)
+├── tests/                      # Test suite
+│   ├── test_example.py         # Example test file
+│   ├── test_github_pr.py       # GitHub PR tests
+│   └── test_plant_entry.py     # Plant entry tests
+├── .github/                    # GitHub configuration
+│   ├── docs/                   # Documentation assets
+│   │   └── logo.png            # Project logo
+│   └── PULL_REQUEST_TEMPLATE.md # PR template
+├── media/                      # Media files directory
+├── Dockerfile                  # Docker configuration
+├── .dockerignore              # Docker ignore rules
+├── .gitignore                 # Git ignore rules
+├── .python-version            # Python version specification
+├── LICENSE                    # MIT License
+├── pyproject.toml             # Project configuration & dependencies
+├── renovate.json              # Renovate bot configuration
+├── uv.lock                    # uv lock file
+└── README.md                  # <-- YOU ARE HERE!
 ```
 
 ## Configuration
