@@ -75,7 +75,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         # Create an aesthetic EXIF metadata display
         if exif_metadata:
-            exif_display = "📸 *Image Details*\n\n"
+            exif_display = "*Image Details*\n\n"
 
             if exif_metadata.get("date_taken"):
                 # Format the date nicely
@@ -96,7 +96,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await update.message.reply_text(exif_display, parse_mode="Markdown")
         else:
             await update.message.reply_text(
-                "📸 *Image Details*\n\nℹ️ No metadata available for this image."
+                "*Image Details*\n\nℹ️ No metadata available for this image."
             )
 
         # Plant identification
