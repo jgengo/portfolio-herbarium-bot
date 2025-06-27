@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 import subprocess
 import tempfile
@@ -9,7 +8,7 @@ from typing import List, Optional
 
 import requests
 
-from .config import GITHUB_REPO_NAME, GITHUB_REPO_OWNER, GITHUB_REPO_URL
+from herbabot.config import GITHUB_REPO_NAME, GITHUB_REPO_OWNER, GITHUB_REPO_URL
 
 logger = logging.getLogger(__name__)
 
