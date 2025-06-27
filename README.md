@@ -1,4 +1,18 @@
-# Herbarium Bot
+<div align="center">
+    <img src='.github/docs/logo.png' alt="herbarium's logo" /><br />
+    <h1 align="center">Herbarium Bot</h1>
+    <sub><em>A timeless notebook of leaves and memories, lovingly pressed by curious hands.</em></sub>
+</div>
+
+
+<div align="center">
+  <sub>Created by <a href="https://github.com/jgengo">Jordane Gengo</a></sub>
+</div>
+
+<br />
+
+
+
 
 🌿 **Automated Plant Documentation Bot**
 
@@ -86,34 +100,45 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
    - Create a pull request to my portfolio
 3. **Review and merge** the pull request to add the plant to my herbarium
 
-<!-- ## Project Structure
+## Project Structure
 
 ```
 portfolio-herbarium-bot/
-├── src/
-│   ├── bot/              # Telegram bot handlers
-│   ├── processors/       # Image and metadata processing
-│   ├── identifiers/      # Plant identification services
-│   ├── templates/        # Markdown templates
-│   └── github/           # GitHub integration
-├── templates/            # Plant entry templates
+├── herbabot/            # Core bot code
+│   ├── config.py        # Environment & config loader
+│   ├── exif_utils.py    # EXIF metadata extraction
+│   ├── handlers.py      # Telegram bot handlers
+│   ├── plant_id.py      # Pl@ntNet identification service
+│   └── main.py          # Bot entry point
+├── templates/           # Markdown templates (welcome, entries, etc.)
 ├── tests/               # Test suite
 ├── pyproject.toml       # Project configuration
-└── README.md           # This file
-``` -->
+└── README.md            # <-- YOU ARE HERE!
+```
 
 ## Configuration
 
-<!-- ### Plant Identification Services
+### Plant Identification Services
 
-The bot supports multiple plant identification services:
+This bot currently uses the Pl@ntNet API to identify plant species from images. The `herbabot.plant_id` module wraps Pl@ntNet v2 and provides:
 
-- **Pl@ntNet** - Free, community-driven plant identification
-- **OpenAI Vision** - AI-powered identification with detailed descriptions -->
+- `identify_plant(image_path, organs=None)` → returns a dict with:
+  - `latin_name`: scientific name
+  - `common_name`: a common name (if available)
+  - `description`: Wikipedia description (if available)
+  - `score`: confidence score
+  - `raw`: full API response
 
-<!-- ### Template Customization
+Authentication is via the `PLANTNET_API_KEY` environment variable.
 
-Customize the markdown templates in the `templates/` directory to match your portfolio's style and structure. -->
+To switch to OpenAI Vision for identification, set `OPENAI_API_KEY` and adjust the handler logic accordingly.
+
+### Template Customization
+
+Customize the markdown templates in the `templates/` directory:
+
+- `bot_welcome.md`: Welcome message template for the Telegram bot
+- `plant_entry.md`: Markdown template for new herbarium entries (create as needed)
 
 ### GitHub Integration
 
