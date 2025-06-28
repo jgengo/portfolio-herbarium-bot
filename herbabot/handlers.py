@@ -72,45 +72,44 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 return
 
         await update.message.reply_text(
-            "📸 File received! Processing your plant image... 🌿"
+            "📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown"
         )
 
         exif_metadata = extract_exif_metadata(file_path)
-        logger.info(f"EXIF metadata: {exif_metadata}")
+        logger.debug(f"EXIF metadata: {exif_metadata}")
 
-        # Create an aesthetic EXIF metadata display
+        # Log detailed EXIF information for debugging
         if exif_metadata:
-            exif_display = "*Image Details*\n\n"
-
+            logger.debug("Image contains EXIF metadata:")
             if exif_metadata.get("date_taken"):
-                # Format the date nicely
                 try:
                     date_obj = datetime.fromisoformat(exif_metadata["date_taken"])
                     formatted_date = date_obj.strftime("%B %d, %Y at %I:%M %p")
-                    exif_display += f"📅 *Taken:* {formatted_date}\n"
+                    logger.debug(f"Date taken: {formatted_date}")
                 except:
-                    exif_display += f"📅 *Taken:* {exif_metadata['date_taken']}\n"
+                    logger.debug(f"Date taken: {exif_metadata['date_taken']}")
 
             if exif_metadata.get("gps_coords"):
                 lat, lon = exif_metadata["gps_coords"]
-                exif_display += f"📍 *Location:* {lat:.6f}, {lon:.6f}\n"
-                # Add a Google Maps link
+                logger.debug(f"GPS coordinates: {lat:.6f}, {lon:.6f}")
                 maps_url = f"https://maps.google.com/?q={lat},{lon}"
-                exif_display += f"🗺️ [View on Google Maps]({maps_url})\n"
+                logger.debug(f"Google Maps URL: {maps_url}")
 
-            await update.message.reply_text(exif_display, parse_mode="Markdown")
-        else:
+            # Simple user message about EXIF data
             await update.message.reply_text(
-                "*Image Details*\n\nℹ️ No metadata available for this image."
+                "📊 *Image contains metadata* (location, date, etc.)",
+                parse_mode="Markdown",
+            )
+        else:
+            logger.debug("No EXIF metadata found in image")
+            await update.message.reply_text(
+                "📊 *No metadata available* for this image", parse_mode="Markdown"
             )
 
         # Plant identification
         try:
             logger.info(f"Starting plant identification for file: {file_path}")
-            logger.info(
-                f"File size before identification: {file_path.stat().st_size} bytes"
-            )
-            logger.info(f"File exists before identification: {file_path.exists()}")
+            logger.debug(f"File size: {file_path.stat().st_size} bytes")
 
             result = identify_plant(file_path)
 
@@ -118,29 +117,24 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 f"Plant identification successful: {result.get('latin_name', 'Unknown')}"
             )
 
-            caption = (
-                f"🌿 *{result['latin_name']}*"
-                + (
-                    f" — _{result['common_name']}_\n"
-                    if result.get("common_name")
-                    else "\n"
-                )
-                + f"🔎 Confidence: {result['score']:.2%}\n"
-                + (result.get("description") or "")
-            )
-            await message.reply_text(caption, parse_mode="Markdown")
+            # Create aesthetic plant identification message
+            plant_message = f"🌿 *{result['latin_name']}*"
+
+            if result.get("common_name"):
+                plant_message += f"\n🌸 _{result['common_name']}_"
+
+            plant_message += f"\n\n🎯 *Confidence:* {result['score']:.1%}"
+
+            if result.get("description"):
+                plant_message += f"\n\n📖 {result['description']}"
+
+            await message.reply_text(plant_message, parse_mode="Markdown")
 
             # Create plant entry using the new module
             plant_entry_path = create_plant_entry(result, file_path)
             if plant_entry_path:
                 entry_info = get_plant_entry_info(result)
-                await message.reply_text(
-                    f"📝 Plant entry created successfully!\n"
-                    f"📄 Markdown file: `{entry_info['markdown_filename']}`\n"
-                    f"🖼️ Image file: `{entry_info['filename']}`\n"
-                    f"📁 Location: `tmp/` directory",
-                    parse_mode="Markdown",
-                )
+                logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
 
                 # Create GitHub PR if token is available
                 github_token = GITHUB_TOKEN
@@ -148,25 +142,29 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 pr_url = create_plant_pr(tmp_dir, github_token)
                 if pr_url:
                     await message.reply_text(
-                        f"🔗 Pull request created!\n" f"📋 Review and merge: {pr_url}",
+                        f"✨ *Plant entry created successfully!*\n\n"
+                        f"🔗 [View Pull Request]({pr_url})\n"
+                        f"📝 Ready for review and merge",
                         parse_mode="Markdown",
                     )
                 else:
                     await message.reply_text(
-                        "⚠️ Failed to create pull request. Check logs for details."
+                        "⚠️ Plant entry created, but failed to create pull request."
                     )
         except Exception as e:
             logger.error("Plant identification error", exc_info=True)
             logger.error(f"Plant identification failed for file: {file_path}")
             logger.error(f"Error details: {str(e)}")
             await message.reply_text(
-                "❌ Could not identify the plant. Please try another photo."
+                "❌ *Could not identify the plant*\n\nPlease try another photo with better lighting and focus.",
+                parse_mode="Markdown",
             )
 
     except Exception as e:
         logger.error(f"Error processing file: {e}")
         await update.message.reply_text(
-            "❌ An error occurred while processing your file. Please try again."
+            "❌ *An error occurred while processing your file*\n\nPlease try again.",
+            parse_mode="Markdown",
         )
     finally:
         # Clean up tmp directory
