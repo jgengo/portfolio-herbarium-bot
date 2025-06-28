@@ -18,3 +18,28 @@ dependencies = [
     "python-telegram-bot>=22.1",
     "requests>=2.32.4",
 ]
+
+[tool.mypy]
+python_version = '3.12'
+disallow_any_unimported = false
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+disallow_untyped_defs = true
+strict_equality = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+mypy_path = './stubs'
+
+[tool.isort]
+profile = 'black'
+src_paths = ['herbabot', 'tests']
+line_length = 119
+
+[tool.black]
+line-length = 119
+target-version = ['py312']
+include = '\.pyi?$'

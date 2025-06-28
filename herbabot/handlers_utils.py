@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from telegram import Document
+from telegram import Document, Message
 
 from herbabot.exif_utils import convert_heic_to_jpeg
 
@@ -23,17 +23,19 @@ def load_welcome_message() -> str:
         return "Welcome to Herbabot! Please send me a plant photo as a file."
 
 
-async def process_incoming_file(message) -> Optional[Path]:
+async def process_incoming_file(message: Message) -> Optional[Path]:
     """Process and download an incoming file from Telegram."""
     document = message.document
+
+    if not document:
+        return None
+
     if not is_valid_image_document(document):
-        await message.reply_text(
-            "❌ Please send an image file (JPEG, PNG, etc.). Other file types are not supported."
-        )
+        await message.reply_text("❌ Please send an image file (JPEG, PNG, etc.). Other file types are not supported.")
         return None
 
     try:
-        file = await message.document.get_file()
+        file = await document.get_file()
         media_dir = Path("media")
         media_dir.mkdir(parents=True, exist_ok=True)
 
@@ -51,9 +53,7 @@ async def process_incoming_file(message) -> Optional[Path]:
                 file_path = jpeg_path
                 logger.info(f"HEIC converted to JPEG: {jpeg_path}")
             else:
-                await message.reply_text(
-                    "❌ Failed to convert HEIC image. Please try sending a JPEG or PNG image."
-                )
+                await message.reply_text("❌ Failed to convert HEIC image. Please try sending a JPEG or PNG image.")
                 return None
 
         return file_path
@@ -69,7 +69,11 @@ async def process_incoming_file(message) -> Optional[Path]:
 
 def is_valid_image_document(document: Document) -> bool:
     """Check if the document is a valid image file."""
-    return document and document.mime_type and document.mime_type.startswith("image/")
+    if not document:
+        return False
+    if not document.mime_type:
+        return False
+    return document.mime_type.startswith("image/")
 
 
 def generate_filename(original_filename: str) -> str:
@@ -79,7 +83,7 @@ def generate_filename(original_filename: str) -> str:
     return f"{uuid.uuid4()}{extension}"
 
 
-async def handle_exif_metadata(message, exif_metadata: Dict[str, Any]) -> None:
+async def handle_exif_metadata(message: Message, exif_metadata: Dict[str, Any]) -> None:
     """Handle and log EXIF metadata from the image."""
     logger.debug(f"EXIF metadata: {exif_metadata}")
 
@@ -91,9 +95,7 @@ async def handle_exif_metadata(message, exif_metadata: Dict[str, Any]) -> None:
         )
     else:
         logger.debug("No EXIF metadata found in image")
-        await message.reply_text(
-            "📊 *No metadata available* for this image", parse_mode="Markdown"
-        )
+        await message.reply_text("📊 *No metadata available* for this image", parse_mode="Markdown")
 
 
 def log_exif_details(exif_metadata: Dict[str, Any]) -> None:

@@ -2,10 +2,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from telegram import Update
+from telegram import Message, Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
-from herbabot.config import GITHUB_TOKEN
 from herbabot.exif_utils import extract_exif_metadata
 from herbabot.github_pr import create_plant_pr
 from herbabot.handlers_utils import (
@@ -23,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_message = load_welcome_message()
+    if not update.message:
+        return None
     await update.message.reply_text(welcome_message, parse_mode="MarkdownV2")
 
 
@@ -30,15 +31,16 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     message = update.message
     tmp_dir = Path("tmp")
 
+    if not message:
+        return None
+
     try:
         # Validate and download file
         file_path = await process_incoming_file(message)
         if not file_path:
             return
 
-        await message.reply_text(
-            "📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown"
-        )
+        await message.reply_text("📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown")
 
         # Extract EXIF metadata
         exif_metadata = extract_exif_metadata(file_path)
@@ -57,30 +59,29 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         cleanup_temporary_directory(tmp_dir)
 
 
-def register_handlers(app):
+def register_handlers(app: Any) -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
 
 
 async def _process_plant_identification(
-    message, file_path: Path, exif_metadata: Dict[str, Any], tmp_dir: Path
+    message: Message,
+    file_path: Path,
+    exif_metadata: Dict[str, Any],
+    tmp_dir: Path,
 ) -> None:
     try:
         logger.info(f"Starting plant identification for file: {file_path}")
         logger.debug(f"File size: {file_path.stat().st_size} bytes")
 
         result = identify_plant(file_path)
-        logger.info(
-            f"Plant identification successful: {result.get('latin_name', 'Unknown')}"
-        )
+        logger.info(f"Plant identification successful: {result.get('latin_name', 'Unknown')}")
 
         # Send plant identification results
         await _send_plant_identification_result(message, result)
 
         # Create plant entry and PR
-        await _create_plant_entry_and_pr(
-            message, result, file_path, exif_metadata, tmp_dir
-        )
+        await _create_plant_entry_and_pr(message, result, file_path, exif_metadata, tmp_dir)
 
     except Exception as e:
         logger.error("Plant identification error", exc_info=True)
@@ -92,7 +93,7 @@ async def _process_plant_identification(
         )
 
 
-async def _send_plant_identification_result(message, result: Dict[str, Any]) -> None:
+async def _send_plant_identification_result(message: Message, result: Dict[str, Any]) -> None:
     """Send formatted plant identification results to the user."""
     plant_message = f"🌿 *{result['latin_name']}*"
 
@@ -111,7 +112,7 @@ async def _send_plant_identification_result(message, result: Dict[str, Any]) -> 
 
 
 async def _create_plant_entry_and_pr(
-    message,
+    message: Message,
     result: Dict[str, Any],
     file_path: Path,
     exif_metadata: Dict[str, Any],
@@ -134,7 +135,7 @@ async def _create_plant_entry_and_pr(
     logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
 
     # Create pull request
-    pr_url = create_plant_pr(tmp_dir, GITHUB_TOKEN)
+    pr_url = create_plant_pr(tmp_dir)
     if pr_url:
         await message.reply_text(
             f"✨ *Plant entry created successfully!*\n\n"
@@ -143,6 +144,4 @@ async def _create_plant_entry_and_pr(
             parse_mode="Markdown",
         )
     else:
-        await message.reply_text(
-            "⚠️ Plant entry created, but failed to create pull request."
-        )
+        await message.reply_text("⚠️ Plant entry created, but failed to create pull request.")

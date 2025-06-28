@@ -4,18 +4,22 @@ import subprocess
 import tempfile
 import uuid
 from pathlib import Path
-from typing import List, Optional
 
 import requests
 
-from herbabot.config import GITHUB_REPO_NAME, GITHUB_REPO_OWNER, GITHUB_REPO_URL
+from herbabot.config import (
+    GITHUB_REPO_NAME,
+    GITHUB_REPO_OWNER,
+    GITHUB_REPO_URL,
+    GITHUB_TOKEN,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def create_pr_from_plant_entries(
     tmp_dir: Path, repo_url: str, github_token: str, repo_owner: str, repo_name: str
-) -> Optional[str]:
+) -> str | None:
     if not tmp_dir.exists():
         logger.warning(f"Tmp directory {tmp_dir} does not exist")
         return None
@@ -43,15 +47,11 @@ def create_pr_from_plant_entries(
                 return None
 
             # Commit and push
-            commit_message = (
-                f"Add plant entries: {', '.join([f.name for f in md_files])}"
-            )
+            commit_message = f"Add plant entries: {', '.join([f.name for f in md_files])}"
             commit_and_push(clone_path, commit_message, branch_name)
 
             # Create pull request
-            pr_url = create_pull_request(
-                branch_name, commit_message, github_token, repo_owner, repo_name
-            )
+            pr_url = create_pull_request(branch_name, commit_message, github_token, repo_owner, repo_name)
 
             logger.info(f"Pull request created successfully: {pr_url}")
             return pr_url
@@ -137,9 +137,7 @@ def commit_and_push(repo_path: Path, commit_message: str, branch_name: str) -> N
     logger.info("Committing and pushing changes")
 
     # Add all files
-    result = subprocess.run(
-        ["git", "add", "."], capture_output=True, text=True, cwd=repo_path
-    )
+    result = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=repo_path)
 
     if result.returncode != 0:
         raise RuntimeError(f"Failed to add files: {result.stderr}")
@@ -169,9 +167,7 @@ def commit_and_push(repo_path: Path, commit_message: str, branch_name: str) -> N
     logger.info("Changes committed and pushed successfully")
 
 
-def create_pull_request(
-    branch_name: str, title: str, github_token: str, repo_owner: str, repo_name: str
-) -> str:
+def create_pull_request(branch_name: str, title: str, github_token: str, repo_owner: str, repo_name: str) -> str:
     """Create a pull request using GitHub API."""
     logger.info("Creating pull request via GitHub API")
 
@@ -193,15 +189,17 @@ def create_pull_request(
     response = requests.post(url, headers=headers, json=data)
 
     if response.status_code != 201:
-        raise RuntimeError(
-            f"Failed to create PR: {response.status_code} - {response.text}"
-        )
+        raise RuntimeError(f"Failed to create PR: {response.status_code} - {response.text}")
 
     pr_data = response.json()
     return pr_data["html_url"]
 
 
-def create_plant_pr(tmp_dir: Path, github_token: str) -> Optional[str]:
+def create_plant_pr(tmp_dir: Path) -> str | None:
     return create_pr_from_plant_entries(
-        tmp_dir, GITHUB_REPO_URL, github_token, GITHUB_REPO_OWNER, GITHUB_REPO_NAME
+        tmp_dir,
+        GITHUB_REPO_URL,  # type: ignore[arg-type]
+        GITHUB_TOKEN,  # type: ignore[arg-type]
+        GITHUB_REPO_OWNER,  # type: ignore[arg-type]
+        GITHUB_REPO_NAME,  # type: ignore[arg-type]
     )

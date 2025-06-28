@@ -8,8 +8,8 @@ from herbabot.handlers import register_handlers
 logging.basicConfig(level=logging.INFO)
 
 
-def main():
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+def main() -> None:
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()  # type: ignore[arg-type]
     register_handlers(app)
     print("🤖 Herbabot is running...")
     app.run_polling()
