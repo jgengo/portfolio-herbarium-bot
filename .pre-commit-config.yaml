@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/google/keep-sorted
+    rev: v0.6.1
+    hooks:
+      - id: keep-sorted
+
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        entry: uv run isort
+        require_serial: true
+        language: system
+        types_or: [python, pyi]
+
+      - id: black
+        name: black
+        entry: uv run black
+        require_serial: true
+        language: system
+        types_or: [python, pyi]
+
+      - id: import-linter
+        name: import-linter
+        entry: uv run lint-imports
+        require_serial: true
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: mypy
+        name: mypy
+        entry: uv run mypy .
+        require_serial: true
+        language: system
+        types: [python]
+        pass_filenames: false
