@@ -102,19 +102,16 @@ portfolio-herbarium-bot/
 ├── herbabot/                    # Core bot code
 │   ├── __init__.py             # Package initialization
 │   ├── config.py               # Environment & config loader
-│   ├── exif_utils.py           # EXIF metadata extraction
+│   ├── exif_utils.py           # EXIF metadata extraction utilities
 │   ├── github_pr.py            # GitHub pull request creation
-│   ├── handlers.py             # Telegram bot handlers
+│   ├── handlers.py             # Telegram bot message handlers
+│   ├── handlers_utils.py       # Handler utility functions
 │   ├── main.py                 # Bot entry point
 │   ├── plant_entry.py          # Plant entry data models
 │   └── plant_id.py             # Pl@ntNet identification service
 ├── templates/                   # Markdown templates
 │   ├── bot_welcome.md          # Welcome message template
 │   └── plant_entry.md.j2       # Plant entry template (Jinja2)
-├── tests/                      # Test suite
-│   ├── test_example.py         # Example test file
-│   ├── test_github_pr.py       # GitHub PR tests
-│   └── test_plant_entry.py     # Plant entry tests
 ├── .github/                    # GitHub configuration
 │   ├── docs/                   # Documentation assets
 │   │   └── logo.png            # Project logo
