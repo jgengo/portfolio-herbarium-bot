@@ -29,7 +29,7 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
 * 📸 **Image Processing** - Receives and processes plant photos via Telegram
 * 📍 **Location Extraction** - Extracts GPS coordinates and location data from EXIF metadata
 * 📅 **Date Detection** - Automatically captures when the photo was taken
-* 🌱 **Plant Identification** - Integrates with Pl@ntNet or OpenAI for species identification
+* 🌱 **Plant Identification** - Integrates with Pl@ntNet for species identification
 * 📝 **Template Generation** - Fills markdown templates with plant information
 * 🔄 **Portfolio Integration** - Creates pull requests to update my herbarium collection
 * 🤖 **Automated Workflow** - Streamlines the entire process from photo to documentation
@@ -38,11 +38,11 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
 
 * **Language:** Python 3.12+
 * **Telegram API:** python-telegram-bot
-* **Image Processing:** Pillow (PIL)
-* **EXIF Extraction:** ExifRead
-* **Plant Identification:** Pl@ntNet API / OpenAI Vision API
-* **Git Operations:** GitPython
-* **Markdown Processing:** Custom templates
+* **Image Processing:** Pillow (PIL) + pillow-heif
+* **EXIF Extraction:** piexif
+* **Plant Identification:** Pl@ntNet API
+* **Git Operations:** Git subprocess commands (no GitPython)
+* **Markdown Processing:** Jinja2 templates
 * **Package Management:** uv
 
 ## Getting Started
@@ -51,7 +51,7 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
 
 * Python 3.12 or higher
 * Telegram Bot Token (from [@BotFather](https://t.me/botfather))
-* Pl@ntNet API key or OpenAI API key
+* Pl@ntNet API key
 * GitHub Personal Access Token (for portfolio integration)
 
 ### Installation
@@ -68,27 +68,21 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
    ```
 
 3. **Set up environment variables:**
-   Create a `.env` file in the root directory:
-   ```env
-   # Telegram Bot
-   TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-   
-   # Plant Identification
-   PLANTNET_API_KEY=your_plantnet_api_key
-   # or
-   OPENAI_API_KEY=your_openai_api_key
-   
-   # GitHub Integration
-   GITHUB_TOKEN=your_github_personal_access_token
-   GITHUB_REPO=your_username/your_portfolio_repo
-   
-   # Optional: Default location for unidentified photos
-   DEFAULT_LOCATION="Unknown Location"
+   Copy `.env.sample` to `.env` and configure your environment variables:
+   ```bash
+   TELEGRAM_BOT_TOKEN="YOUR TELEGRAM BOT TOKEN"
+
+   PLANTNET_API_KEY="YOUR PLANTNET API KEY"
+
+   GITHUB_TOKEN="YOUR GITHUB TOKEN"
+   GITHUB_REPO_URL="YOUR GITHUB REPO URL"
+   GITHUB_REPO_OWNER="YOUR GITHUB NAME"
+   GITHUB_REPO_NAME="YOUR GITHUB REPO NAME"
    ```
 
 4. **Run the bot:**
    ```bash
-   uv run python main.py
+   uv run python -m herbabot.main
    ```
 
 ## Usage
@@ -139,40 +133,40 @@ portfolio-herbarium-bot/
 
 ## Configuration
 
-### Plant Identification Services
-
-This bot currently uses the Pl@ntNet API to identify plant species from images. The `herbabot.plant_id` module wraps Pl@ntNet v2 and provides:
-
-- `identify_plant(image_path, organs=None)` → returns a dict with:
-  - `latin_name`: scientific name
-  - `common_name`: a common name (if available)
-  - `description`: Wikipedia description (if available)
-  - `score`: confidence score
-  - `raw`: full API response
-
-Authentication is via the `PLANTNET_API_KEY` environment variable.
-
-To switch to OpenAI Vision for identification, set `OPENAI_API_KEY` and adjust the handler logic accordingly.
-
-### Template Customization
-
-Customize the markdown templates in the `templates/` directory:
-
-- `bot_welcome.md`: Welcome message template for the Telegram bot
-- `plant_entry.md`: Markdown template for new herbarium entries (create as needed)
-
 ### GitHub Integration
 
-The bot automatically:
-- Creates feature branches for new plant entries
-- Generates descriptive commit messages
+To use the bot's GitHub integration features, you need to create a fine-grained personal access token with specific permissions:
+
+1. **Go to GitHub Settings:**
+   - Navigate to [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/tokens?type=beta)
+   - Click "Generate new token (classic)"
+
+2. **Configure Token Settings:**
+   - **Token name:** `herbarium-bot` (or any descriptive name)
+   - **Expiration:** Choose an appropriate expiration date
+   - **Repository access:** Select "Only select repositories" and choose your portfolio repository
+
+3. **Set Required Permissions:**
+   - **Repository permissions:**
+     - **Metadata:** `Read access` (required for repository information)
+     - **Contents:** `Read and write` (required for creating branches and commits)
+     - **Pull requests:** `Read and write` (required for creating pull requests)
+
+4. **Generate and Save Token:**
+   - Click "Generate token"
+   - Copy the token immediately (it won't be shown again)
+   - Add it to your `.env` file as `GITHUB_TOKEN`
+
+The bot will then automatically:
+- Create feature branches for new plant entries
+- Generate descriptive commit messages
 - Opens pull requests with plant information
 
 ## Contributing
 
-1. Fork the repository
+1. Fork this repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
