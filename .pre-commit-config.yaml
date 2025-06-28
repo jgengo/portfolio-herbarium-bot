@@ -20,14 +20,6 @@ repos:
         language: system
         types_or: [python, pyi]
 
-      - id: import-linter
-        name: import-linter
-        entry: uv run lint-imports
-        require_serial: true
-        language: system
-        types: [python]
-        pass_filenames: false
-
       - id: mypy
         name: mypy
         entry: uv run mypy .

@@ -1,15 +1,21 @@
+import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Tuple
 
 import piexif
 from PIL import Image
 from pillow_heif import register_heif_opener
 
+logger = logging.getLogger(__name__)
 register_heif_opener()
 
 
-def extract_exif_metadata(image_path: Path) -> dict:
+def extract_exif_metadata(image_path: Path) -> dict[str, Any]:
+    if not image_path.exists():
+        logger.warning(f"Image file does not exist: {image_path}")
+        return {}
+
     exif = _get_exif_data(image_path)
     if not exif:
         return {}
@@ -23,7 +29,11 @@ def extract_exif_metadata(image_path: Path) -> dict:
     }
 
 
-def convert_heic_to_jpeg(heic_path: Path) -> Optional[Path]:
+def convert_heic_to_jpeg(heic_path: Path) -> Path | None:
+    if not heic_path.exists():
+        logger.error(f"HEIC file does not exist: {heic_path}")
+        return None
+
     try:
         with Image.open(heic_path) as image:
             # Convert to RGB mode if necessary (HEIC images might be in RGBA or other modes)
@@ -44,38 +54,42 @@ def convert_heic_to_jpeg(heic_path: Path) -> Optional[Path]:
             image.save(
                 out_path, format="JPEG", exif=exif_data, optimize=True, quality=95
             )
+            logger.info(f"Successfully converted {heic_path} to {out_path}")
             return out_path
-    except Exception as e:
-        print(f"Failed to convert HEIC: {e}")
+    except (OSError, ValueError, IOError) as e:
+        logger.error(f"Failed to convert HEIC {heic_path}: {e}")
         return None
 
 
-def _get_exif_data(image_path: Path) -> Optional[dict]:
+def _get_exif_data(image_path: Path) -> dict[str, Any] | None:
     try:
-        img = Image.open(image_path)
-        exif_dict = piexif.load(img.info.get("exif", b""))
-        return exif_dict
-    except Exception as e:
-        print(f"Error reading EXIF data: {e}")
+        with Image.open(image_path) as img:
+            exif_dict = piexif.load(img.info.get("exif", b""))
+            return exif_dict
+    except (OSError, ValueError, IOError) as e:
+        logger.error(f"Error reading EXIF data from {image_path}: {e}")
         return None
 
 
-def _get_date_taken(exif_data: dict) -> Optional[str]:
+def _get_date_taken(exif_data: dict[str, Any]) -> str | None:
     try:
         date_str = exif_data["Exif"][piexif.ExifIFD.DateTimeOriginal].decode()
         # Convert to ISO 8601 format: "2023:10:22 15:34:21" → "2023-10-22T15:34:21"
         return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S").isoformat()
-    except Exception:
+    except (KeyError, ValueError, UnicodeDecodeError) as e:
+        logger.debug(f"Could not extract date from EXIF data: {e}")
         return None
 
 
-def convert_gps_coord(coord, ref):
+def convert_gps_coord(
+    coord: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]], ref: str
+) -> float:
     deg, min_, sec = coord
     value = deg[0] / deg[1] + min_[0] / min_[1] / 60 + sec[0] / sec[1] / 3600
     return -value if ref in ["S", "W"] else value
 
 
-def _get_gps_coords(exif_data: dict) -> Optional[Tuple[float, float]]:
+def _get_gps_coords(exif_data: dict[str, Any]) -> Tuple[float, float] | None:
     try:
         gps = exif_data["GPS"]
         lat = convert_gps_coord(
@@ -85,5 +99,6 @@ def _get_gps_coords(exif_data: dict) -> Optional[Tuple[float, float]]:
             gps[piexif.GPSIFD.GPSLongitude], gps[piexif.GPSIFD.GPSLongitudeRef].decode()
         )
         return (lat, lon)
-    except Exception:
+    except (KeyError, ValueError, UnicodeDecodeError) as e:
+        logger.debug(f"Could not extract GPS coordinates from EXIF data: {e}")
         return None
