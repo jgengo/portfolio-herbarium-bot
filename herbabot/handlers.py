@@ -1,5 +1,6 @@
 import logging
 import shutil
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -123,6 +124,9 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             if result.get("common_name"):
                 plant_message += f"\n🌸 _{result['common_name']}_"
 
+            if result.get("family"):
+                plant_message += f"\n🌳 **Family:** {result['family']}"
+
             plant_message += f"\n\n🎯 *Confidence:* {result['score']:.1%}"
 
             if result.get("description"):
@@ -130,16 +134,24 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
             await message.reply_text(plant_message, parse_mode="Markdown")
 
+            # Prepare GPS data for plant entry
+            gps_data = None
+            if exif_metadata and exif_metadata.get("gps_coords"):
+                lat, lon = exif_metadata["gps_coords"]
+                gps_data = {
+                    "latitude": lat,
+                    "longitude": lon,
+                    "accuracy": exif_metadata.get("gps_accuracy"),
+                }
+                logger.info(f"GPS data prepared: lat={lat:.6f}, lon={lon:.6f}")
+
             # Create plant entry using the new module
-            plant_entry_path = create_plant_entry(result, file_path)
+            plant_entry_path = create_plant_entry(result, file_path, gps_data)
             if plant_entry_path:
                 entry_info = get_plant_entry_info(result)
                 logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
 
-                # Create GitHub PR if token is available
-                github_token = GITHUB_TOKEN
-
-                pr_url = create_plant_pr(tmp_dir, github_token)
+                pr_url = create_plant_pr(tmp_dir, GITHUB_TOKEN)
                 if pr_url:
                     await message.reply_text(
                         f"✨ *Plant entry created successfully!*\n\n"

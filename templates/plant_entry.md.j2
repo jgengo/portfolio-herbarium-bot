@@ -2,10 +2,12 @@
 name: "{{ name }}"
 family: "{{ family }}"
 scientificName: "{{ scientificName }}"
-image: "/plants/{{ fileName }}"
-height: ""
+image: "/plants/{{ fileName }}"{% if latitude and longitude %}
+latitude: {{ latitude }}
+longitude: {{ longitude }}{% if accuracy %}
+accuracy: {{ accuracy }}{% endif %}{% endif %}
 ---
 
 # {{ scientificName }}
 
-{{ description }}
+{% if description and description != "No description available." %}{{ description }}{% endif %}

@@ -73,9 +73,14 @@ def identify_plant(
     latin_name = species.get("scientificNameWithoutAuthor")
     common_names = species.get("commonNames") or []
     common_name = common_names[0] if common_names else None
+    family = (
+        species.get("family", {}).get("scientificNameWithoutAuthor")
+        if species.get("family")
+        else None
+    )
 
     logger.info(
-        f"Top result - Latin name: {latin_name}, Common name: {common_name}, Score: {score}"
+        f"Top result - Latin name: {latin_name}, Common name: {common_name}, Family: {family}, Score: {score}"
     )
 
     description: Optional[str] = None
@@ -87,6 +92,7 @@ def identify_plant(
     return {
         "latin_name": latin_name,
         "common_name": common_name,
+        "family": family,
         "description": description,
         "score": score,
         "raw": data,

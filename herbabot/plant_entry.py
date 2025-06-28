@@ -17,13 +17,19 @@ def _sanitize_filename(name: str) -> str:
     return sanitized.strip("-") + ".jpg"
 
 
-def create_plant_entry(result: Dict[str, Any], image_path: Path) -> Optional[Path]:
+def create_plant_entry(
+    result: Dict[str, Any],
+    image_path: Path,
+    gps_data: Dict[str, float] | None = None,
+) -> Path | None:
     """
     Create a plant entry markdown file using the Jinja2 template.
 
     Args:
         result: Dictionary containing plant identification results
         image_path: Path to the original image file
+        gps_data: Optional dictionary containing GPS coordinates
+                  Expected format: {"latitude": float, "longitude": float, "accuracy": float}
 
     Returns:
         Path to the created plant entry markdown file, or None if creation failed
@@ -53,11 +59,17 @@ def create_plant_entry(result: Dict[str, Any], image_path: Path) -> Optional[Pat
     # Prepare template variables
     template_vars = {
         "name": result.get("common_name", scientific_name),
-        "family": "Unknown",  # PlantNet API doesn't provide family info in basic response
+        "family": result.get("family", "Unknown"),  # Use family from Pl@ntNet response
         "scientificName": scientific_name,
         "fileName": filename,
-        "description": result.get("description", "No description available."),
+        "description": result.get("description"),
     }
+
+    # Add GPS data if available
+    if gps_data:
+        template_vars["latitude"] = gps_data.get("latitude")
+        template_vars["longitude"] = gps_data.get("longitude")
+        template_vars["accuracy"] = gps_data.get("accuracy")
 
     # Render the template
     template = Template(template_content)
