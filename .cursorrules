@@ -1,0 +1,163 @@
+# Herbarium Bot - Cursor Rules
+
+## Project Overview
+This is a Telegram bot that processes plant photos, extracts metadata, identifies species using Pl@ntNet, and creates GitHub pull requests to update a portfolio herbarium collection. The project follows a modular architecture with clear separation of concerns.
+
+## Technology Stack
+- **Python 3.12+** with modern type hints
+- **python-telegram-bot** for Telegram integration
+- **Pl@ntNet API** for plant identification
+- **GitHub API** for repository operations
+- **Jinja2** for template rendering
+- **Pillow + piexif** for image and EXIF processing
+- **uv** for package management
+- **pytest** for testing
+
+## Code Style & Patterns
+
+### File Organization
+- Keep modules focused and single-purpose
+- Use descriptive file names that reflect their functionality
+- Place shared utilities in dedicated modules (e.g., `exif_utils.py`, `config.py`)
+- Avoid classes unless they represent clear domain entities or stateful services
+
+### Python Conventions
+- Use type hints for all function parameters and return values
+- Follow PEP 8 style guidelines
+- Use f-strings for string formatting
+- Prefer list/dict comprehensions over loops when appropriate
+- Use dataclasses for data models (see `plant_entry.py`)
+
+### Error Handling
+- Use specific exception types rather than generic `Exception`
+- Provide meaningful error messages
+- Log errors with appropriate context
+- Handle API failures gracefully with retry logic
+
+### Configuration
+- Use environment variables for all sensitive data
+- Centralize configuration in `config.py`
+- Validate required environment variables on startup
+
+## Architecture Patterns
+
+### Handler Pattern
+- Telegram handlers should be focused and handle one type of message
+- Use async/await consistently
+- Extract business logic from handlers into service classes
+- Return meaningful responses to users
+
+### Service Layer
+- Separate API interactions into dedicated service classes
+- Use dependency injection for external services
+- Implement proper error handling and retries
+- Cache results when appropriate
+
+### Data Models
+- Use dataclasses for structured data
+- Implement validation methods where needed
+- Use enums for fixed sets of values
+- Provide clear string representations
+
+## Testing Guidelines
+- Write unit tests for all business logic
+- Mock external API calls in tests
+- Use pytest fixtures for common test data
+- Test both success and failure scenarios
+- Aim for high test coverage
+
+## Documentation Standards
+- Use docstrings for all public functions and classes
+- Follow Google-style docstring format
+- Include examples in docstrings for complex functions
+- Keep README.md updated with new features
+
+## Security Considerations
+- Never log sensitive data (tokens, API keys)
+- Validate all user inputs
+- Use environment variables for secrets
+- Implement rate limiting for API calls
+- Sanitize file paths and names
+
+## Performance Guidelines
+- Use async/await for I/O operations
+- Implement caching for expensive operations
+- Use connection pooling for HTTP requests
+
+## Common Patterns
+
+### API Integration
+```python
+async def call_external_api(self, data: dict) -> dict:
+    """Call external API with proper error handling."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.api_url, json=data) as response:
+                response.raise_for_status()
+                return await response.json()
+    except aiohttp.ClientError as e:
+        logger.error(f"API call failed: {e}")
+        raise APIError(f"Failed to call external API: {e}")
+```
+
+### Configuration Loading
+```python
+def load_config() -> Config:
+    """Load and validate configuration from environment."""
+    load_dotenv()
+    
+    required_vars = ["TELEGRAM_BOT_TOKEN", "PLANTNET_API_KEY"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        raise ConfigError(f"Missing required environment variables: {missing_vars}")
+    
+    return Config(
+        telegram_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+        plantnet_api_key=os.getenv("PLANTNET_API_KEY"),
+        # ... other config
+    )
+```
+
+### Data Model Example
+```python
+@dataclass
+class PlantEntry:
+    """Represents a plant entry in the herbarium."""
+    species: str
+    location: str
+    date: datetime
+    image_path: str
+    
+    def to_markdown(self) -> str:
+        """Convert to markdown format."""
+        # Implementation here
+        pass
+```
+
+## When Suggesting Code
+- Consider the existing codebase patterns
+- Maintain consistency with current naming conventions
+- Include proper error handling
+- Add type hints
+- Consider testability
+- Follow the established module structure
+- Use async/await for I/O operations
+- Implement proper logging
+
+## Common Pitfalls to Avoid
+- Don't hardcode API endpoints or tokens
+- Don't ignore error handling
+- Don't use synchronous code for I/O operations
+- Don't create overly complex functions
+- Don't skip type hints
+- Don't forget to handle edge cases
+- Don't log sensitive information
+
+## Project-Specific Context
+- This bot integrates with a personal portfolio repository
+- Plant identification uses Pl@ntNet API
+- Images are processed to extract EXIF metadata
+- GitHub pull requests are created automatically
+- Templates use Jinja2 for markdown generation
+- The bot runs as a Telegram bot service 
