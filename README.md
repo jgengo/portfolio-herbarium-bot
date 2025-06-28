@@ -150,7 +150,7 @@ To use the bot's GitHub integration features, you need to create a fine-grained 
      - **Pull requests:** `Read and write` (required for creating pull requests)
 
 4. **Generate and Save Token:**
-   - Click "Generate token"
+   - Click &quot;Generate token&quot;
    - Copy the token immediately (it won't be shown again)
    - Add it to your `.env` file as `GITHUB_TOKEN`
 
@@ -158,6 +158,28 @@ The bot will then automatically:
 - Create feature branches for new plant entries
 - Generate descriptive commit messages
 - Opens pull requests with plant information
+
+## FAQ
+
+**Why do I need to send photos as files instead of regular photos?**
+
+Telegram strips EXIF data (GPS, date) from regular photos. The bot needs this metadata to automatically extract location and date information. File uploads preserve the original image quality and metadata.
+
+**How to send as file:** 
+
+Tap 📎 → Select "File" → Choose photo → Send
+
+**How accurate is the identification?** 
+
+Accuracy depends on image quality and plant rarity. Best results come from:
+- Clear, well-lit photos
+- Close-ups of flowers/leaves
+- Single plant species in frame
+
+**Can I use this for my own portfolio?**
+
+Yes! Fork the repo, update the GitHub settings in your environment variables, and customize the templates to match your style.
+
 
 ## Contributing
 
