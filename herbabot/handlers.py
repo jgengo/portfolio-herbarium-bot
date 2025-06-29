@@ -1,10 +1,12 @@
 import logging
+from functools import wraps
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Callable, Coroutine, Dict
 
 from telegram import Message, Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
+from herbabot.config import ALLOWED_USER_IDS
 from herbabot.exif_utils import extract_exif_metadata
 from herbabot.github_pr import create_plant_pr
 from herbabot.handlers_utils import (
@@ -20,6 +22,31 @@ from herbabot.plant_id import identify_plant
 logger = logging.getLogger(__name__)
 
 
+def require_authorized_user(
+    func: Callable[[Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]],
+) -> Callable[[Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]]:
+    @wraps(func)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.effective_user:
+            logger.warning("No user found in update")
+            return None
+
+        user_id = update.effective_user.id
+
+        if ALLOWED_USER_IDS and user_id not in ALLOWED_USER_IDS:
+            logger.warning(f"Unauthorized access attempt by user {user_id}")
+            if update.message:
+                await update.message.reply_text(
+                    "❌ *Access Denied*\n\nYou are not authorized to use this bot.", parse_mode="Markdown"
+                )
+            return None
+
+        return await func(update, context)
+
+    return wrapper
+
+
+@require_authorized_user
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_message = load_welcome_message()
     if not update.message:
@@ -27,6 +54,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(welcome_message, parse_mode="MarkdownV2")
 
 
+@require_authorized_user
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     tmp_dir = Path("tmp")
