@@ -42,18 +42,14 @@ def convert_heic_to_jpeg(heic_path: Path) -> Path | None:
                 background = Image.new("RGB", image.size, (255, 255, 255))
                 if image.mode == "P":
                     image = image.convert("RGBA")
-                background.paste(
-                    image, mask=image.split()[-1] if image.mode == "RGBA" else None
-                )
+                background.paste(image, mask=image.split()[-1] if image.mode == "RGBA" else None)
                 image = background
             elif image.mode != "RGB":
                 image = image.convert("RGB")
 
             exif_data = image.info.get("exif")
             out_path = heic_path.with_suffix(".jpg")
-            image.save(
-                out_path, format="JPEG", exif=exif_data, optimize=True, quality=95
-            )
+            image.save(out_path, format="JPEG", exif=exif_data, optimize=True, quality=95)
             logger.info(f"Successfully converted {heic_path} to {out_path}")
             return out_path
     except (OSError, ValueError, IOError) as e:
@@ -81,9 +77,7 @@ def _get_date_taken(exif_data: dict[str, Any]) -> str | None:
         return None
 
 
-def convert_gps_coord(
-    coord: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]], ref: str
-) -> float:
+def convert_gps_coord(coord: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]], ref: str) -> float:
     deg, min_, sec = coord
     value = deg[0] / deg[1] + min_[0] / min_[1] / 60 + sec[0] / sec[1] / 3600
     return -value if ref in ["S", "W"] else value
@@ -92,12 +86,8 @@ def convert_gps_coord(
 def _get_gps_coords(exif_data: dict[str, Any]) -> Tuple[float, float] | None:
     try:
         gps = exif_data["GPS"]
-        lat = convert_gps_coord(
-            gps[piexif.GPSIFD.GPSLatitude], gps[piexif.GPSIFD.GPSLatitudeRef].decode()
-        )
-        lon = convert_gps_coord(
-            gps[piexif.GPSIFD.GPSLongitude], gps[piexif.GPSIFD.GPSLongitudeRef].decode()
-        )
+        lat = convert_gps_coord(gps[piexif.GPSIFD.GPSLatitude], gps[piexif.GPSIFD.GPSLatitudeRef].decode())
+        lon = convert_gps_coord(gps[piexif.GPSIFD.GPSLongitude], gps[piexif.GPSIFD.GPSLongitudeRef].decode())
         return (lat, lon)
     except (KeyError, ValueError, UnicodeDecodeError) as e:
         logger.debug(f"Could not extract GPS coordinates from EXIF data: {e}")

@@ -14,9 +14,7 @@ def identify_plant(
     organs: Optional[str] = None,
 ) -> Dict[str, Any]:
     if not PLANTNET_API_KEY:
-        raise ValueError(
-            "Missing PLANTNET_API_KEY environment variable for Pl@ntNet API access"
-        )
+        raise ValueError("Missing PLANTNET_API_KEY environment variable for Pl@ntNet API access")
 
     path = Path(image_path)
     if not path.is_file():
@@ -73,15 +71,9 @@ def identify_plant(
     latin_name = species.get("scientificNameWithoutAuthor")
     common_names = species.get("commonNames") or []
     common_name = common_names[0] if common_names else None
-    family = (
-        species.get("family", {}).get("scientificNameWithoutAuthor")
-        if species.get("family")
-        else None
-    )
+    family = species.get("family", {}).get("scientificNameWithoutAuthor") if species.get("family") else None
 
-    logger.info(
-        f"Top result - Latin name: {latin_name}, Common name: {common_name}, Family: {family}, Score: {score}"
-    )
+    logger.info(f"Top result - Latin name: {latin_name}, Common name: {common_name}, Family: {family}, Score: {score}")
 
     description: Optional[str] = None
     gbif = top.get("gbif", {})
