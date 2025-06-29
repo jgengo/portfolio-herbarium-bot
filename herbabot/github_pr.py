@@ -226,9 +226,9 @@ def create_pull_request(
 def create_plant_pr(tmp_dir: Path, plant_info: dict | None = None) -> str | None:
     return create_pr_from_plant_entries(
         tmp_dir,
-        GITHUB_REPO_URL,  # type: ignore[arg-type]
-        GITHUB_TOKEN,  # type: ignore[arg-type]
-        GITHUB_REPO_OWNER,  # type: ignore[arg-type]
-        GITHUB_REPO_NAME,  # type: ignore[arg-type]
+        GITHUB_REPO_URL,
+        GITHUB_TOKEN,
+        GITHUB_REPO_OWNER,
+        GITHUB_REPO_NAME,
         plant_info,
     )

@@ -1,31 +1,26 @@
 # herbabot/config.py
-import os
+from pydantic import ValidationError
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from dotenv import load_dotenv
 
-# Load .env file into environment variables
-load_dotenv()
+class Config(BaseSettings):
+    telegram_bot_token: str
+    plantnet_api_key: str
+    plantnet_api_url: str = "https://my-api.plantnet.org/v2/identify/all"
+    github_token: str
+    github_repo_url: str
+    github_repo_owner: str
+    github_repo_name: str
 
-# Telegram
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-# Plant Identification
-PLANTNET_API_KEY = os.getenv("PLANTNET_API_KEY")
-PLANTNET_API_URL = os.getenv("PLANTNET_API_URL", "https://my-api.plantnet.org/v2/identify/all")
 
-# GitHub (optional - for automatic PR creation)
-GITHUB_TOKEN: str | None = os.getenv("GITHUB_TOKEN")
-GITHUB_REPO_URL: str | None = os.getenv("GITHUB_REPO_URL")
-GITHUB_REPO_OWNER: str | None = os.getenv("GITHUB_REPO_OWNER")
-GITHUB_REPO_NAME: str | None = os.getenv("GITHUB_REPO_NAME")
+config = Config()  # type: ignore
 
-required = {
-    "TELEGRAM_BOT_TOKEN": TELEGRAM_BOT_TOKEN,
-    "PLANTNET_API_KEY": PLANTNET_API_KEY,
-    "PLANTNET_API_URL": PLANTNET_API_URL,
-    "GITHUB_TOKEN": GITHUB_TOKEN,
-}
-
-missing = [k for k, v in required.items() if not v]
-if missing:
-    raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+TELEGRAM_BOT_TOKEN = config.telegram_bot_token
+PLANTNET_API_KEY = config.plantnet_api_key
+PLANTNET_API_URL = config.plantnet_api_url
+GITHUB_TOKEN = config.github_token
+GITHUB_REPO_URL = config.github_repo_url
+GITHUB_REPO_OWNER = config.github_repo_owner
+GITHUB_REPO_NAME = config.github_repo_name

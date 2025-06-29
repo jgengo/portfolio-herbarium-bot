@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()  # type: ignore[arg-type]
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     register_handlers(app)
     print("🤖 Herbabot is running...")
     app.run_polling()

@@ -1,18 +1,19 @@
-FROM python:3.14.0b3-alpine3.21
+FROM python:3.12-slim
 
 # Install system dependencies for building Python packages
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3-dev \
-    build-base \
+    build-essential \
     libffi-dev \
-    openssl-dev \
-    zlib-dev \
-    libjpeg-turbo-dev \
+    libssl-dev \
+    zlib1g-dev \
+    libjpeg-dev \
     libwebp-dev \
-    tiff-dev \
+    libtiff-dev \
     libde265-dev \
     libheif-dev \
-    git
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Configure Git for the container
 RUN git config --global user.email "jordane.gengo@gmail.com" && \
