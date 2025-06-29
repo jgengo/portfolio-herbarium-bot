@@ -3,28 +3,24 @@ from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
-    TELEGRAM_BOT_TOKEN: str
-    PLANTNET_API_KEY: str
-    PLANTNET_API_URL: str = "https://my-api.plantnet.org/v2/identify/all"
-    GITHUB_TOKEN: str | None = None
-    GITHUB_REPO_URL: str | None = None
-    GITHUB_REPO_OWNER: str | None = None
-    GITHUB_REPO_NAME: str | None = None
+class Config(BaseSettings):
+    telegram_bot_token: str
+    plantnet_api_key: str
+    plantnet_api_url: str = "https://my-api.plantnet.org/v2/identify/all"
+    github_token: str
+    github_repo_url: str
+    github_repo_owner: str
+    github_repo_name: str
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
-try:
-    settings = Settings()
-except ValidationError as e:  # pragma: no cover - config validation
-    missing = ", ".join(error["loc"][0] for error in e.errors())
-    raise ValueError(f"Missing required environment variables: {missing}") from None
+config = Config()  # type: ignore
 
-TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
-PLANTNET_API_KEY = settings.PLANTNET_API_KEY
-PLANTNET_API_URL = settings.PLANTNET_API_URL
-GITHUB_TOKEN = settings.GITHUB_TOKEN
-GITHUB_REPO_URL = settings.GITHUB_REPO_URL
-GITHUB_REPO_OWNER = settings.GITHUB_REPO_OWNER
-GITHUB_REPO_NAME = settings.GITHUB_REPO_NAME
+TELEGRAM_BOT_TOKEN = config.telegram_bot_token
+PLANTNET_API_KEY = config.plantnet_api_key
+PLANTNET_API_URL = config.plantnet_api_url
+GITHUB_TOKEN = config.github_token
+GITHUB_REPO_URL = config.github_repo_url
+GITHUB_REPO_OWNER = config.github_repo_owner
+GITHUB_REPO_NAME = config.github_repo_name
