@@ -52,9 +52,7 @@ def create_plant_entry(
     filename = _sanitize_filename(scientific_name)
 
     # Create the plant entry file path
-    plant_entry_path = (
-        tmp_dir / f"{_sanitize_filename(scientific_name).replace('.jpg', '')}.md"
-    )
+    plant_entry_path = tmp_dir / f"{_sanitize_filename(scientific_name).replace('.jpg', '')}.md"
 
     # Prepare template variables
     template_vars = {

@@ -183,11 +183,8 @@ Yes! Fork the repo, update the GitHub settings in your environment variables, an
 
 ## Contributing
 
-1. Fork this repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up your
+development environment and opening pull requests.
 
 ## License
 
