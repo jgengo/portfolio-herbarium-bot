@@ -135,7 +135,7 @@ async def _create_plant_entry_and_pr(
     logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
 
     # Create pull request
-    pr_url = create_plant_pr(tmp_dir)
+    pr_url = create_plant_pr(tmp_dir, result)
     if pr_url:
         await message.reply_text(
             f"✨ *Plant entry created successfully!*\n\n"
