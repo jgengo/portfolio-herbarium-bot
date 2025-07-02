@@ -5,9 +5,8 @@ scientificName: "{{ scientificName }}"
 image: "/plants/{{ fileName }}"{% if latitude and longitude %}
 latitude: {{ latitude }}
 longitude: {{ longitude }}{% if accuracy %}
-accuracy: {{ accuracy }}{% endif %}{% endif %}
+accuracy: {{ accuracy }}{% endif %}{% endif %}{% if date %}
+date: {{ date }}{% endif %}
 ---
-
-# {{ scientificName }}
 
 {% if description and description != "No description available." %}{{ description }}{% endif %}

@@ -13,6 +13,7 @@ from herbabot.handlers_utils import (
     cleanup_temporary_directory,
     handle_exif_metadata,
     load_welcome_message,
+    prepare_date,
     prepare_gps_data,
     process_incoming_file,
 )
@@ -146,12 +147,11 @@ async def _create_plant_entry_and_pr(
     exif_metadata: Dict[str, Any],
     tmp_dir: Path,
 ) -> None:
-    """Create plant entry and pull request."""
-    # Prepare GPS data
     gps_data = prepare_gps_data(exif_metadata)
+    date = prepare_date(exif_metadata.get("date_taken"))
 
     # Create plant entry
-    plant_entry_path = create_plant_entry(result, file_path, gps_data)
+    plant_entry_path = create_plant_entry(result, file_path, gps_data, date)
     if not plant_entry_path:
         await message.reply_text(
             "❌ Failed to create plant entry. Please try again.",

@@ -132,6 +132,18 @@ def prepare_gps_data(exif_metadata: Dict[str, Any]) -> Optional[Dict[str, float]
     return gps_data
 
 
+def prepare_date(date_str: str | None) -> str | None:
+    if not date_str:
+        return None
+
+    try:
+        date_obj = datetime.fromisoformat(date_str)
+        return date_obj.strftime("%Y-%m-%d")
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Failed to parse date '{date_str}': {e}")
+        return None
+
+
 def cleanup_temporary_directory(tmp_dir: Path) -> None:
     """Clean up the temporary directory."""
     if tmp_dir.exists():

@@ -21,6 +21,7 @@ def create_plant_entry(
     result: Dict[str, Any],
     image_path: Path,
     gps_data: Dict[str, float] | None = None,
+    date: str | None = None,
 ) -> Path | None:
     """
     Create a plant entry markdown file using the Jinja2 template.
@@ -61,6 +62,7 @@ def create_plant_entry(
         "scientificName": scientific_name,
         "fileName": filename,
         "description": result.get("description"),
+        "date": date,
     }
 
     # Add GPS data if available

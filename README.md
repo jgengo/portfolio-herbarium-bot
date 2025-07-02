@@ -68,16 +68,28 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
    ```
 
 3. **Set up environment variables:**
-   Copy `.env.sample` to `.env` and configure your environment variables:
+   Create a `.env` file and configure your environment variables:
    ```bash
+   # Telegram Bot Configuration
    TELEGRAM_BOT_TOKEN="YOUR TELEGRAM BOT TOKEN"
 
+   # Pl@ntNet API Configuration
    PLANTNET_API_KEY="YOUR PLANTNET API KEY"
+   PLANTNET_API_URL="https://my-api.plantnet.org/v2/identify/all"
 
+   # GitHub Configuration
    GITHUB_TOKEN="YOUR GITHUB TOKEN"
    GITHUB_REPO_URL="YOUR GITHUB REPO URL"
    GITHUB_REPO_OWNER="YOUR GITHUB NAME"
    GITHUB_REPO_NAME="YOUR GITHUB REPO NAME"
+
+   # Optional: Comma-separated list of allowed Telegram user IDs
+   ALLOWED_USER_IDS=""
+
+   # Logging Configuration
+   # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+   # Use DEBUG for local development, WARNING/ERROR for production
+   LOGGING_LEVEL="WARNING"
    ```
 
 4. **Run the bot:**
@@ -129,6 +141,25 @@ portfolio-herbarium-bot/
 ```
 
 ## Configuration
+
+### Logging Configuration
+
+The bot supports different logging levels for different environments:
+
+- **Local Development:** Set `LOGGING_LEVEL="DEBUG"` for detailed logs
+- **Production:** Set `LOGGING_LEVEL="WARNING"` or `LOGGING_LEVEL="ERROR"` for minimal logs
+
+Available levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+
+Example for local development:
+```bash
+LOGGING_LEVEL="DEBUG"
+```
+
+Example for production:
+```bash
+LOGGING_LEVEL="WARNING"
+```
 
 ### GitHub Integration
 
