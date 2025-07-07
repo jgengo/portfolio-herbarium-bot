@@ -1,7 +1,9 @@
+"""Telegram handlers for Herbabot."""
+
 import logging
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Dict
+from typing import Any, Awaitable, Callable, Dict
 
 from telegram import Message, Update
 from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
@@ -22,10 +24,13 @@ from herbabot.plant_id import identify_plant
 
 logger = logging.getLogger(__name__)
 
+# Type alias for telegram handler functions
+HandlerFunc = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 
-def require_authorized_user(
-    func: Callable[[Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]],
-) -> Callable[[Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]]:
+
+def require_authorized_user(func: HandlerFunc) -> HandlerFunc:
+    """Restrict command handlers to authorized Telegram users."""
+
     @wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.effective_user:
@@ -49,14 +54,19 @@ def require_authorized_user(
 
 @require_authorized_user
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a welcome message to the user."""
+
     welcome_message = load_welcome_message()
     if not update.message:
         return None
+
     await update.message.reply_text(welcome_message, parse_mode="MarkdownV2")
 
 
 @require_authorized_user
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle an uploaded image, identify the plant and create a PR."""
+
     message = update.message
     tmp_dir = Path("tmp")
 
@@ -64,21 +74,29 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return None
 
     try:
-        # Validate and download file
+        # Validate and download the photo
         file_path = await process_incoming_file(message)
         if not file_path:
             return
 
-        await message.reply_text("📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown")
+        await message.reply_text(
+            "📸 *Image received!* Processing your plant... 🌿",
+            parse_mode="Markdown",
+        )
 
-        # Extract EXIF metadata
+        # Extract and handle EXIF metadata
         exif_metadata = extract_exif_metadata(file_path)
         await handle_exif_metadata(message, exif_metadata)
 
-        # Process plant identification and create entry
-        await _process_plant_identification(message, file_path, exif_metadata, tmp_dir)
+        # Identify the plant and create the portfolio entry
+        await _process_plant_identification(
+            message=message,
+            file_path=file_path,
+            exif_metadata=exif_metadata,
+            tmp_dir=tmp_dir,
+        )
 
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - network/IO errors
         logger.error(f"Error processing file: {e}")
         await message.reply_text(
             "❌ *An error occurred while processing your file*\n\nPlease try again.",
@@ -89,6 +107,8 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 def register_handlers(app: Any) -> None:
+    """Register bot command and message handlers."""
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
 
@@ -99,12 +119,14 @@ async def _process_plant_identification(
     exif_metadata: Dict[str, Any],
     tmp_dir: Path,
 ) -> None:
+    """Identify the plant, create an entry and open a PR."""
+
     try:
-        logger.info(f"Starting plant identification for file: {file_path}")
-        logger.debug(f"File size: {file_path.stat().st_size} bytes")
+        logger.info("Starting plant identification for file: %s", file_path)
+        logger.debug("File size: %s bytes", file_path.stat().st_size)
 
         result = identify_plant(file_path)
-        logger.info(f"Plant identification successful: {result.get('latin_name', 'Unknown')}")
+        logger.info("Plant identification successful: %s", result.get("latin_name", "Unknown"))
 
         # Send plant identification results
         await _send_plant_identification_result(message, result)
@@ -112,10 +134,10 @@ async def _process_plant_identification(
         # Create plant entry and PR
         await _create_plant_entry_and_pr(message, result, file_path, exif_metadata, tmp_dir)
 
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - external service failures
         logger.error("Plant identification error", exc_info=True)
-        logger.error(f"Plant identification failed for file: {file_path}")
-        logger.error(f"Error details: {str(e)}")
+        logger.error("Plant identification failed for file: %s", file_path)
+        logger.error("Error details: %s", e)
         await message.reply_text(
             "❌ *Could not identify the plant*\n\nPlease try another photo with better lighting and focus.",
             parse_mode="Markdown",
@@ -147,6 +169,8 @@ async def _create_plant_entry_and_pr(
     exif_metadata: Dict[str, Any],
     tmp_dir: Path,
 ) -> None:
+    """Create a plant entry from the photo and open a pull request."""
+
     gps_data = prepare_gps_data(exif_metadata)
     date = prepare_date(exif_metadata.get("date_taken"))
 
