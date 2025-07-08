@@ -112,7 +112,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 
 ```
 portfolio-herbarium-bot/
-├── herbabot/                    # Core bot code
+├── herbabot/                   # Core bot code
 │   ├── __init__.py             # Package initialization
 │   ├── config.py               # Environment & config loader
 │   ├── exif_utils.py           # EXIF metadata extraction utilities
@@ -122,7 +122,7 @@ portfolio-herbarium-bot/
 │   ├── main.py                 # Bot entry point
 │   ├── plant_entry.py          # Plant entry data models
 │   └── plant_id.py             # Pl@ntNet identification service
-├── templates/                   # Markdown templates
+├── templates/                  # Markdown templates
 │   ├── bot_welcome.md          # Welcome message template
 │   └── plant_entry.md.j2       # Plant entry template (Jinja2)
 ├── .github/                    # GitHub configuration
@@ -130,17 +130,17 @@ portfolio-herbarium-bot/
 │   │   └── logo.png            # Project logo
 │   └── PULL_REQUEST_TEMPLATE.md # PR template
 ├── media/                      # Media files directory
-├── CONTRIBUTING.md            # Contribution guidelines
+├── CONTRIBUTING.md             # Contribution guidelines
 ├── Dockerfile                  # Docker configuration
-├── .dockerignore              # Docker ignore rules
-├── .github/workflows/ci.yml   # Continuous integration
-├── .gitignore                 # Git ignore rules
-├── .python-version            # Python version specification
-├── LICENSE                    # MIT License
-├── pyproject.toml             # Project configuration & dependencies
-├── renovate.json              # Renovate bot configuration
-├── uv.lock                    # uv lock file
-└── README.md                  # <-- YOU ARE HERE!
+├── .dockerignore               # Docker ignore rules
+├── .github/workflows/ci.yml    # Continuous integration
+├── .gitignore                  # Git ignore rules
+├── .python-version             # Python version specification
+├── LICENSE                     # MIT License
+├── pyproject.toml              # Project configuration & dependencies
+├── renovate.json               # Renovate bot configuration
+├── uv.lock                     # uv lock file
+└── README.md                   # <-- YOU ARE HERE!
 ```
 
 ## Configuration
