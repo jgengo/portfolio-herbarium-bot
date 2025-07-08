@@ -19,19 +19,20 @@ A Telegram bot that automatically processes plant photos, extracts metadata, ide
  <img src='.github/docs/screenshot.png' alt="herbarium's logo" width="400px" /><br />
 </div><br />
 
-> [!NOTE]
-> This bot is designed to work with my personal portfolio repository.
+This bot expects a GitHub repository where plant entries will be committed via pull requests.
 
 <br>
 
 ## Features
 
-* 📸 **Image Processing** - Receives and processes plant photos via Telegram
+* 👥 **User Restriction** - Optionally limit usage to specific Telegram user IDs
+* 📸 **Image Processing** - Receives plant photos via Telegram
+* 🔄 **HEIC Conversion** - Automatically converts HEIC images to JPEG
 * 📍 **Location Extraction** - Extracts GPS coordinates and location data from EXIF metadata
 * 📅 **Date Detection** - Automatically captures when the photo was taken
 * 🌱 **Plant Identification** - Integrates with Pl@ntNet for species identification
 * 📝 **Template Generation** - Fills markdown templates with plant information
-* 🔄 **Portfolio Integration** - Creates pull requests to update my herbarium collection
+* 🔄 **Portfolio Integration** - Creates pull requests to update the herbarium collection
 * 🤖 **Automated Workflow** - Streamlines the entire process from photo to documentation
 
 ## Tech Stack
@@ -129,8 +130,10 @@ portfolio-herbarium-bot/
 │   │   └── logo.png            # Project logo
 │   └── PULL_REQUEST_TEMPLATE.md # PR template
 ├── media/                      # Media files directory
+├── CONTRIBUTING.md            # Contribution guidelines
 ├── Dockerfile                  # Docker configuration
 ├── .dockerignore              # Docker ignore rules
+├── .github/workflows/ci.yml   # Continuous integration
 ├── .gitignore                 # Git ignore rules
 ├── .python-version            # Python version specification
 ├── LICENSE                    # MIT License
@@ -163,32 +166,17 @@ LOGGING_LEVEL="WARNING"
 
 ### GitHub Integration
 
-To use the bot's GitHub integration features, you need to create a fine-grained personal access token with specific permissions:
+Create a personal access token with rights to create branches and pull requests on the portfolio repository.
 
-1. **Go to GitHub Settings:**
-   - Navigate to [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/tokens?type=beta)
-   - Click "Generate new token (classic)"
-
-2. **Configure Token Settings:**
-   - **Token name:** `herbarium-bot` (or any descriptive name)
-   - **Expiration:** Choose an appropriate expiration date
-   - **Repository access:** Select "Only select repositories" and choose your portfolio repository
-
-3. **Set Required Permissions:**
-   - **Repository permissions:**
-     - **Metadata:** `Read access` (required for repository information)
-     - **Contents:** `Read and write` (required for creating branches and commits)
-     - **Pull requests:** `Read and write` (required for creating pull requests)
-
-4. **Generate and Save Token:**
-   - Click &quot;Generate token&quot;
-   - Copy the token immediately (it won't be shown again)
-   - Add it to your `.env` file as `GITHUB_TOKEN`
+1. **Generate a token** in [GitHub Settings](https://github.com/settings/tokens).
+2. **Grant repository access** to the target repository.
+3. **Enable permissions:** `metadata`, `contents` and `pull requests`.
+4. **Store the token** in your `.env` file as `GITHUB_TOKEN`
 
 The bot will then automatically:
 - Create feature branches for new plant entries
 - Generate descriptive commit messages
-- Opens pull requests with plant information
+- Open pull requests with plant information
 
 ## FAQ
 
