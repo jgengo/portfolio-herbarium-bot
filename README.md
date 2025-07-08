@@ -13,7 +13,7 @@
 
 🌿 **Automated Plant Documentation Bot**
 
-A Telegram bot that automatically processes plant photos, extracts metadata, identifies species, and updates a portfolio's herbarium collection.
+A Telegram bot that automatically processes plant photos, extracts metadata, identifies species, and updates my portfolio's herbarium collection.
 
 <div align="center">
  <img src='.github/docs/screenshot.png' alt="herbarium's logo" width="400px" /><br />
@@ -25,6 +25,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 
 ## Features
 
+* 👥 **User Restriction** - Optionally limit usage to specific Telegram user IDs
 * 📸 **Image Processing** - Receives plant photos via Telegram
 * 🔄 **HEIC Conversion** - Automatically converts HEIC images to JPEG
 * 📍 **Location Extraction** - Extracts GPS coordinates and location data from EXIF metadata
@@ -32,7 +33,6 @@ This bot expects a GitHub repository where plant entries will be committed via p
 * 🌱 **Plant Identification** - Integrates with Pl@ntNet for species identification
 * 📝 **Template Generation** - Fills markdown templates with plant information
 * 🔄 **Portfolio Integration** - Creates pull requests to update the herbarium collection
-* 👥 **User Restriction** - Optionally limit usage to specific Telegram user IDs
 * 🤖 **Automated Workflow** - Streamlines the entire process from photo to documentation
 
 ## Tech Stack
@@ -130,7 +130,6 @@ portfolio-herbarium-bot/
 │   │   └── logo.png            # Project logo
 │   └── PULL_REQUEST_TEMPLATE.md # PR template
 ├── media/                      # Media files directory
-├── tests/                      # Test suite
 ├── CONTRIBUTING.md            # Contribution guidelines
 ├── Dockerfile                  # Docker configuration
 ├── .dockerignore              # Docker ignore rules
