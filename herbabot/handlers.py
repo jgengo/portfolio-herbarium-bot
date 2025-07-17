@@ -28,18 +28,8 @@ def require_authorized_user(
 ) -> Callable[[Update, ContextTypes.DEFAULT_TYPE], Coroutine[Any, Any, None]]:
     @wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_user:
-            logger.warning("No user found in update")
-            return None
-
-        user_id = update.effective_user.id
-
-        if ALLOWED_USER_IDS and user_id not in ALLOWED_USER_IDS:
-            logger.warning(f"Unauthorized access attempt by user {user_id}")
-            if update.message:
-                await update.message.reply_text(
-                    "❌ *Access Denied*\n\nYou are not authorized to use this bot.", parse_mode="Markdown"
-                )
+        if not _is_valid_user(update):
+            await _handle_unauthorized_access(update)
             return None
 
         return await func(update, context)
@@ -49,41 +39,26 @@ def require_authorized_user(
 
 @require_authorized_user
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    welcome_message = load_welcome_message()
     if not update.message:
         return None
+
+    welcome_message = load_welcome_message()
     await update.message.reply_text(welcome_message, parse_mode="MarkdownV2")
 
 
 @require_authorized_user
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
-    tmp_dir = Path("tmp")
-
     if not message:
         return None
 
+    tmp_dir = Path("tmp")
+
     try:
-        # Validate and download file
-        file_path = await process_incoming_file(message)
-        if not file_path:
-            return
-
-        await message.reply_text("📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown")
-
-        # Extract EXIF metadata
-        exif_metadata = extract_exif_metadata(file_path)
-        await handle_exif_metadata(message, exif_metadata)
-
-        # Process plant identification and create entry
-        await _process_plant_identification(message, file_path, exif_metadata, tmp_dir)
-
+        await _process_uploaded_file(message, tmp_dir)
     except Exception as e:
         logger.error(f"Error processing file: {e}")
-        await message.reply_text(
-            "❌ *An error occurred while processing your file*\n\nPlease try again.",
-            parse_mode="Markdown",
-        )
+        await _send_error_message(message, "An error occurred while processing your file")
     finally:
         cleanup_temporary_directory(tmp_dir)
 
@@ -93,37 +68,61 @@ def register_handlers(app: Any) -> None:
     app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
 
 
-async def _process_plant_identification(
-    message: Message,
-    file_path: Path,
-    exif_metadata: Dict[str, Any],
-    tmp_dir: Path,
-) -> None:
-    try:
-        logger.info(f"Starting plant identification for file: {file_path}")
-        logger.debug(f"File size: {file_path.stat().st_size} bytes")
+def _is_valid_user(update: Update) -> bool:
+    if not update.effective_user:
+        logger.warning("No user found in update")
+        return False
 
-        result = identify_plant(file_path)
-        logger.info(f"Plant identification successful: {result.get('latin_name', 'Unknown')}")
+    user_id = update.effective_user.id
+    if ALLOWED_USER_IDS and user_id not in ALLOWED_USER_IDS:
+        logger.warning(f"Unauthorized access attempt by user {user_id}")
+        return False
 
-        # Send plant identification results
-        await _send_plant_identification_result(message, result)
+    return True
 
-        # Create plant entry and PR
-        await _create_plant_entry_and_pr(message, result, file_path, exif_metadata, tmp_dir)
 
-    except Exception as e:
-        logger.error("Plant identification error", exc_info=True)
-        logger.error(f"Plant identification failed for file: {file_path}")
-        logger.error(f"Error details: {str(e)}")
-        await message.reply_text(
-            "❌ *Could not identify the plant*\n\nPlease try another photo with better lighting and focus.",
-            parse_mode="Markdown",
+async def _handle_unauthorized_access(update: Update) -> None:
+    if update.message:
+        await update.message.reply_text(
+            "❌ *Access Denied*\n\nYou are not authorized to use this bot.", parse_mode="Markdown"
         )
 
 
-async def _send_plant_identification_result(message: Message, result: Dict[str, Any]) -> None:
-    """Send formatted plant identification results to the user."""
+async def _process_uploaded_file(message: Message, tmp_dir: Path) -> None:
+    file_path = await process_incoming_file(message)
+    if not file_path:
+        return
+
+    await message.reply_text("📸 *Image received!* Processing your plant... 🌿", parse_mode="Markdown")
+
+    exif_metadata = extract_exif_metadata(file_path)
+    await handle_exif_metadata(message, exif_metadata)
+    await _process_plant_identification(message, file_path, exif_metadata, tmp_dir)
+
+
+async def _send_error_message(message: Message, error_text: str) -> None:
+    await message.reply_text(f"❌ *{error_text}*\n\nPlease try again.", parse_mode="Markdown")
+
+
+def _log_identification_start(file_path: Path) -> None:
+    logger.info(f"Starting plant identification for file: {file_path}")
+    logger.debug(f"File size: {file_path.stat().st_size} bytes")
+
+
+def _log_identification_error(file_path: Path, error: Exception) -> None:
+    logger.error("Plant identification error", exc_info=True)
+    logger.error(f"Plant identification failed for file: {file_path}")
+    logger.error(f"Error details: {str(error)}")
+
+
+async def _send_identification_error_message(message: Message) -> None:
+    await message.reply_text(
+        "❌ *Could not identify the plant*\n\nPlease try another photo with better lighting and focus.",
+        parse_mode="Markdown",
+    )
+
+
+def _format_plant_identification_message(result: Dict[str, Any]) -> str:
     plant_message = f"🌿 *{result['latin_name']}*"
 
     if result.get("common_name"):
@@ -137,7 +136,50 @@ async def _send_plant_identification_result(message: Message, result: Dict[str, 
     if result.get("description"):
         plant_message += f"\n\n📖 {result['description']}"
 
-    await message.reply_text(plant_message, parse_mode="Markdown")
+    return plant_message
+
+
+def _log_entry_creation(result: Dict[str, Any]) -> None:
+    entry_info = get_plant_entry_info(result)
+    logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
+
+
+async def _send_pr_result_message(message: Message, pr_url: str | None) -> None:
+    if pr_url:
+        await message.reply_text(
+            f"✨ *Plant entry created successfully!*\n\n"
+            f"🔗 [View Pull Request]({pr_url})\n"
+            f"📝 Ready for review and merge",
+            parse_mode="Markdown",
+        )
+    else:
+        await message.reply_text("⚠️ Plant entry created, but failed to create pull request.")
+
+
+async def _process_plant_identification(
+    message: Message,
+    file_path: Path,
+    exif_metadata: Dict[str, Any],
+    tmp_dir: Path,
+) -> None:
+    try:
+        _log_identification_start(file_path)
+
+        identification_result = identify_plant(file_path)
+        plant_name = identification_result.get("latin_name", "Unknown")
+        logger.info(f"Plant identification successful: {plant_name}")
+
+        await _send_plant_identification_result(message, identification_result)
+        await _create_plant_entry_and_pr(message, identification_result, file_path, exif_metadata, tmp_dir)
+
+    except Exception as e:
+        _log_identification_error(file_path, e)
+        await _send_identification_error_message(message)
+
+
+async def _send_plant_identification_result(message: Message, result: Dict[str, Any]) -> None:
+    formatted_message = _format_plant_identification_message(result)
+    await message.reply_text(formatted_message, parse_mode="Markdown")
 
 
 async def _create_plant_entry_and_pr(
@@ -150,26 +192,12 @@ async def _create_plant_entry_and_pr(
     gps_data = prepare_gps_data(exif_metadata)
     date = prepare_date(exif_metadata.get("date_taken"))
 
-    # Create plant entry
     plant_entry_path = create_plant_entry(result, file_path, gps_data, date)
     if not plant_entry_path:
-        await message.reply_text(
-            "❌ Failed to create plant entry. Please try again.",
-            parse_mode="Markdown",
-        )
+        await _send_error_message(message, "Failed to create plant entry")
         return
 
-    entry_info = get_plant_entry_info(result)
-    logger.debug(f"Plant entry created: {entry_info['markdown_filename']}")
+    _log_entry_creation(result)
 
-    # Create pull request
     pr_url = create_plant_pr(tmp_dir, result)
-    if pr_url:
-        await message.reply_text(
-            f"✨ *Plant entry created successfully!*\n\n"
-            f"🔗 [View Pull Request]({pr_url})\n"
-            f"📝 Ready for review and merge",
-            parse_mode="Markdown",
-        )
-    else:
-        await message.reply_text("⚠️ Plant entry created, but failed to create pull request.")
+    await _send_pr_result_message(message, pr_url)
