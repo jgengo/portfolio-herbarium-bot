@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 
 from jinja2 import Template
 
+from herbabot.plant_description import generate_plant_description
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,13 +57,20 @@ def create_plant_entry(
     # Create the plant entry file path
     plant_entry_path = tmp_dir / f"{_sanitize_filename(scientific_name).replace('.jpg', '')}.md"
 
+    # Generate enhanced description using OpenAI
+    logger.info(f"Generating OpenAI description for {scientific_name}")
+    ai_description = generate_plant_description(result)
+
+    # Use OpenAI description if available, otherwise fall back to existing description
+    description = ai_description if ai_description else result.get("description")
+
     # Prepare template variables
     template_vars = {
         "name": result.get("common_name", scientific_name),
         "family": result.get("family", "Unknown"),  # Use family from Pl@ntNet response
         "scientificName": scientific_name,
         "fileName": filename,
-        "description": result.get("description"),
+        "description": description,
         "date": date,
     }
 

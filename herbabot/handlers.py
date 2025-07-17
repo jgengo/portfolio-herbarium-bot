@@ -109,6 +109,9 @@ async def _process_plant_identification(
         # Send plant identification results
         await _send_plant_identification_result(message, result)
 
+        # Notify user about AI description generation
+        await message.reply_text("🤖 *Generating detailed description with AI...*", parse_mode="Markdown")
+
         # Create plant entry and PR
         await _create_plant_entry_and_pr(message, result, file_path, exif_metadata, tmp_dir)
 

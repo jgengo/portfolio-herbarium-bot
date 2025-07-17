@@ -8,6 +8,7 @@ class Config(BaseSettings):
     telegram_bot_token: str
     plantnet_api_key: str
     plantnet_api_url: str = "https://my-api.plantnet.org/v2/identify/all"
+    openai_api_key: str
     github_token: str
     github_repo_url: str
     github_repo_owner: str
@@ -23,6 +24,7 @@ config = Config()  # type: ignore
 TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 PLANTNET_API_KEY = config.plantnet_api_key
 PLANTNET_API_URL = config.plantnet_api_url
+OPENAI_API_KEY = config.openai_api_key
 GITHUB_TOKEN = config.github_token
 GITHUB_REPO_URL = config.github_repo_url
 GITHUB_REPO_OWNER = config.github_repo_owner

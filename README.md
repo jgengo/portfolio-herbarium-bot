@@ -31,6 +31,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 * 📍 **Location Extraction** - Extracts GPS coordinates and location data from EXIF metadata
 * 📅 **Date Detection** - Automatically captures when the photo was taken
 * 🌱 **Plant Identification** - Integrates with Pl@ntNet for species identification
+* 🧠 **AI-Enhanced Descriptions** - Generates detailed botanical descriptions using OpenAI
 * 📝 **Template Generation** - Fills markdown templates with plant information
 * 🔄 **Portfolio Integration** - Creates pull requests to update the herbarium collection
 * 🤖 **Automated Workflow** - Streamlines the entire process from photo to documentation
@@ -42,6 +43,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 * **Image Processing:** Pillow (PIL) + pillow-heif
 * **EXIF Extraction:** piexif
 * **Plant Identification:** Pl@ntNet API
+* **AI Descriptions:** OpenAI API (GPT-4o-mini)
 * **Git Operations:** Git subprocess commands (no GitPython)
 * **Markdown Processing:** Jinja2 templates
 * **Package Management:** uv
@@ -53,6 +55,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 * Python 3.12 or higher
 * Telegram Bot Token (from [@BotFather](https://t.me/botfather))
 * Pl@ntNet API key
+* OpenAI API key (for AI-enhanced plant descriptions)
 * GitHub Personal Access Token (for portfolio integration)
 
 ### Installation
@@ -77,6 +80,9 @@ This bot expects a GitHub repository where plant entries will be committed via p
    # Pl@ntNet API Configuration
    PLANTNET_API_KEY="YOUR PLANTNET API KEY"
    PLANTNET_API_URL="https://my-api.plantnet.org/v2/identify/all"
+
+   # OpenAI API Configuration
+   OPENAI_API_KEY="YOUR OPENAI API KEY"
 
    # GitHub Configuration
    GITHUB_TOKEN="YOUR GITHUB TOKEN"
@@ -104,6 +110,7 @@ This bot expects a GitHub repository where plant entries will be committed via p
 2. **Wait for processing** - The bot will:
    - Extract location and date from EXIF data
    - Identify the plant species
+   - Generate AI-enhanced botanical description
    - Generate a markdown entry
    - Create a pull request to my portfolio
 3. **Review and merge** the pull request to add the plant to my herbarium
@@ -120,6 +127,7 @@ portfolio-herbarium-bot/
 │   ├── handlers.py             # Telegram bot message handlers
 │   ├── handlers_utils.py       # Handler utility functions
 │   ├── main.py                 # Bot entry point
+│   ├── plant_description.py    # OpenAI description generation service
 │   ├── plant_entry.py          # Plant entry data models
 │   └── plant_id.py             # Pl@ntNet identification service
 ├── templates/                   # Markdown templates
